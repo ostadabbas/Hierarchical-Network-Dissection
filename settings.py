@@ -1,7 +1,7 @@
 ######### global settings  #########
 GPU = True                                  # running on GPU is highly suggested
 MODEL = 'resnet50'                          # model arch: resnet18, alexnet, resnet50, densenet161, etc.
-DATASET = 'IMDB-WIKI'                       # model trained on: vggface, SCUT-5500, etc.
+DATASET = 'IMDB-WIKI'                       # dataset trained on: vggface, SCUT-5500, etc.
 TASK = 'age'                                # choose from 'age', 'gender', 'beauty', 'facenet', 'fairface', 'smile'
 LAYER_NAME = 'layer4'                       # the layer that is being dissected , ex. layer4, layer3, layer2, layer1
 QUANTILE = 0.05                             # the threshold used for activation 0.005
@@ -19,4 +19,5 @@ BATCH_SIZE = 8
 TALLY_BATCH_SIZE = 32
 # TALLY_AHEAD = 4
 # INDEX_FILE = 'final_dict.csv'
-CROP = True
+CROP_BOOL = {'age':False, 'gender':False, 'beauty':False, 'facenet':True, 'fairface':True, 'smile':False}
+CROP = CROP_BOOL[TASK]
