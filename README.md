@@ -37,7 +37,8 @@ Finally, we use these thresholds to segment the activation maps for each unit re
 - layer_tally.npz
 - layer_conv.pdf
 
-![plot](imgs/report_photo.png)
+![plot](./imgs/report_photo.png)
+![Alt text](./imgs/report_photo.png?raw=true "Dissection Report Sample")
 
 ### Stage 2 (Probabilistic Hierarchy)
 
