@@ -37,15 +37,15 @@ Finally, we use these thresholds to segment the activation maps for each unit re
 - layer_tally.npz
 - layer_conv.pdf
 
-![plot](./imgs/report_photo.png)
-![Alt text](./imgs/report_photo.png?raw=true "Dissection Report Sample")
+<!-- ![plot](./imgs/report_photo.png) -->
+![Alt text](https://ibb.co/XpmXrnC)
 
 ### Stage 2 (Probabilistic Hierarchy)
 
 Even though we can obtain the dominant concepts per unit based on IoU, more often than not there is more than one concept that manages to obtain a high IoU and it is very likely these concepts lie in a similar region of the face. In that case, it is better to establish a hierarchy of concepts that lie in the same region of the face as that of the top concept returned by Stage 1 pipeline. In order to do that we run the `cluster_top.py` script as it identifies the facial region and then generates probabilities for every concept within that region of the face. This script generates the probabilities in the form of a text file (as shown below) named:
 - layer_top_concept_probs.txt
 
-![plot](imgs/cluster_probs.png)
+![Alt text](https://ibb.co/QkZYCwT)
 
 ### Stage 3 (Non Localizable Bias)
 
