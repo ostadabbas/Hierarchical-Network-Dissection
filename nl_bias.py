@@ -9,21 +9,6 @@ from tqdm import tqdm
 from PIL import Image
 from torchvision import transforms
 
-dense_labels = ['AU_1', 'AU_2', 'AU_4', 'AU_5', 'AU_6', 'AU_9', 'AU_12', 'AU_15', 'AU_17', 'AU_20', 'AU_25', 'AU_26',
-                'nose', 'left_brow', 'right_brow', 'left_eye', 'right_eye', 'mouth', 'left_cheek', 'right_cheek',
-                '5_o_Clock_Shadow', 'Arched_Eyebrows', 'Bushy_Eyebrows', 'No_Beard', 'Bags_Under_Eyes','Big_Lips',
-                'Big_Nose', 'Double_Chin', 'Eyeglasses', 'Goatee', 'High_Cheekbones', 'Rosy_Cheeks',
-                'Mouth_Slightly_Open', 'Mustache', 'Narrow_Eyes', 'Pointy_Nose', 'Smiling', 'Wearing_Lipstick']
-
-tasks = ['smile', 'age', 'gender', 'beauty', 'fairface', 'facenet']
-# units = [512, 512, 512, 512, 192, 512]
-sizes = [200, 128, 128, 224, 112, 224]
-# tasks = ['facenet']
-
-# def softmax(x):
-#     """Compute softmax values for each sets of scores in x."""
-#     e_x = np.exp(x - np.max(x))
-#     return e_x / e_x.sum()
 
 class non_localizable_dict():
 
@@ -110,10 +95,10 @@ def age_features(size, curr_task, curr_model):
 
         feature_dict[grp] = features
 
-    np.savez('{}/{}_model_bias(age)_layer2.npz'.format(settings.NL_FOLDER, curr_task), zero=feature_dict['zero_to_twenty'],
-                                                                           twenty=feature_dict['twenty_to_forty'],
-                                                                           forty=feature_dict['forty_to_sixty'],
-                                                                           sixty=feature_dict['sixty_plus'])
+    np.savez('{}/{}_model_bias(age).npz'.format(settings.NL_FOLDER, curr_task), zero=feature_dict['zero_to_twenty'],
+                                                                                twenty=feature_dict['twenty_to_forty'],
+                                                                                forty=feature_dict['forty_to_sixty'],
+                                                                                sixty=feature_dict['sixty_plus'])
 
 
 def gender_features(size, curr_task, curr_model):
@@ -147,7 +132,9 @@ def gender_features(size, curr_task, curr_model):
 
         feature_dict[grp] = features
 
-    np.savez('{}/{}_model_bias(gender)_layer2.npz'.format(settings.NL_FOLDER, curr_task), male=feature_dict['Male'], female=feature_dict['Female'])
+    np.savez('{}/{}_model_bias(gender).npz'.format(settings.NL_FOLDER, curr_task),
+                                                   male=feature_dict['Male'],
+                                                   female=feature_dict['Female'])
 
 
 def ethnic_features(size, curr_task, curr_model):
@@ -180,10 +167,10 @@ def ethnic_features(size, curr_task, curr_model):
 
         feature_dict[grp] = features
 
-    np.savez('{}/{}_model_bias(ethnic)_layer2.npz'.format(settings.NL_FOLDER, curr_task), white=feature_dict['white'],
-                                                                              black=feature_dict['black'],
-                                                                              asian=feature_dict['asian'],
-                                                                              indian=feature_dict['indian'])
+    np.savez('{}/{}_model_bias(ethnic).npz'.format(settings.NL_FOLDER, curr_task), white=feature_dict['white'],
+                                                                                   black=feature_dict['black'],
+                                                                                   asian=feature_dict['asian'],
+                                                                                   indian=feature_dict['indian'])
 
 def skin_features(size, curr_task, curr_model):
 
@@ -216,30 +203,7 @@ def skin_features(size, curr_task, curr_model):
 
         feature_dict[grp] = features
 
-    np.savez('{}/{}_model_bias(skin_tone)_layer2.npz'.format(settings.NL_FOLDER, curr_task), bright=feature_dict['bright'], dark=feature_dict['dark'])
-
-for i, task in enumerate(tasks):
-    # print(task, 'layer2')
-
-    if task == 'age':
-        from loader.model_loader_age import loadmodel
-    if task == 'gender':
-        from loader.model_loader_gender import loadmodel
-    if task == 'beauty':
-        from loader.model_loader_beauty import loadmodel
-    if task == 'facenet':
-        from loader.model_loader_face import loadmodel
-    if task == 'fairface':
-        from loader.model_loader_fairface import loadmodel
-    if task == 'smile':
-        from loader.model_loader_smile import loadmodel
-
-    model = loadmodel(hook_feature)
-
-    age_features(sizes[i], task, model)
-    gender_features(sizes[i], task, model)
-    ethnic_features(sizes[i], task, model)
-    skin_features(sizes[i], task, model)
+    np.savez('{}/{}_model_bias(skin_tone).npz'.format(settings.NL_FOLDER, curr_task), bright=feature_dict['bright'], dark=feature_dict['dark'])
 
 
 # age_features()
@@ -310,8 +274,10 @@ def bias_analysis():
         # unit_prob_tally[5] = {'age':{}, 'gender':{}, 'ethnic':{}} #
         unit_prob_tally = {}
 
-        for ux in range(num_units[:2]):
-            print(ux)
+        for ux in range(num_units):
+
+            unit_prob_tally[ux+1] = {'age':{}, 'gender':{}, 'ethnic':{}, 'skin':{}}
+            # print(ux)
             age_scores = dict((x, 0) for x in age_indexes)
             gender_scores = dict((x, 0) for x in gender_indexes)
             ethnic_scores = dict((x, 0) for x in ethnic_indexes)
@@ -386,18 +352,20 @@ def bias_analysis():
             skin_scores['bright'] = skin_scores['bright'] / 1500
             skin_scores['dark'] = skin_scores['dark'] / 1500
 
-            # age_probs = softmax(list(age_scores.values()))
             age_probs = list(age_scores.values()) / sum(list(age_scores.values()))
-            # ethnic_probs = softmax(list(ethnic_scores.values()))
             ethnic_probs = list(ethnic_scores.values()) / sum(list(ethnic_scores.values()))
-            # gender_probs = softmax(list(gender_scores.values()))
             gender_probs = list(gender_scores.values()) / sum(list(gender_scores.values()))
             skin_probs = list(skin_scores.values()) / sum(list(skin_scores.values()))
 
-            # print(age_probs)
-            # print(ethnic_probs)
-            # print(gender_probs)
-            # print(skin_probs)
+            age_keys = list(age_scores.keys())
+            ethnic_keys = list(ethnic_scores.keys())
+            gender_keys = list(gender_scores.keys())
+            skin_keys = list(skin_scores.keys())
+
+            unit_prob_tally[ux+1]['age'] = dict((x, y) for x, y in zip(age_keys, age_probs))
+            unit_prob_tally[ux+1]['gender'] = dict((x, y) for x, y in zip(gender_keys, gender_probs))
+            unit_prob_tally[ux+1]['ethnic'] = dict((x, y) for x, y in zip(ethnic_keys, ethnic_probs))
+            unit_prob_tally[ux+1]['skin'] = dict((x, y) for x, y in zip(skin_keys, skin_probs))
 
         # print(ethnic_scores)
 
@@ -418,3 +386,39 @@ def bias_analysis():
 
 
 # bias_analysis()
+if __name__ == '__main__':
+
+    dense_labels = ['AU_1', 'AU_2', 'AU_4', 'AU_5', 'AU_6', 'AU_9', 'AU_12', 'AU_15', 'AU_17', 'AU_20', 'AU_25', 'AU_26',
+                    'nose', 'left_brow', 'right_brow', 'left_eye', 'right_eye', 'mouth', 'left_cheek', 'right_cheek',
+                    '5_o_Clock_Shadow', 'Arched_Eyebrows', 'Bushy_Eyebrows', 'No_Beard', 'Bags_Under_Eyes','Big_Lips',
+                    'Big_Nose', 'Double_Chin', 'Eyeglasses', 'Goatee', 'High_Cheekbones', 'Rosy_Cheeks',
+                    'Mouth_Slightly_Open', 'Mustache', 'Narrow_Eyes', 'Pointy_Nose', 'Smiling', 'Wearing_Lipstick']
+
+    tasks = ['smile', 'age', 'gender', 'beauty', 'fairface', 'facenet']
+    # units = [512, 512, 512, 512, 192, 512]
+    sizes = [200, 128, 128, 224, 112, 224]
+
+    for i, task in enumerate(tasks):
+    # print(task, 'layer2')
+
+    if task == 'age':
+        from loader.model_loader_age import loadmodel
+    if task == 'gender':
+        from loader.model_loader_gender import loadmodel
+    if task == 'beauty':
+        from loader.model_loader_beauty import loadmodel
+    if task == 'facenet':
+        from loader.model_loader_face import loadmodel
+    if task == 'fairface':
+        from loader.model_loader_fairface import loadmodel
+    if task == 'smile':
+        from loader.model_loader_smile import loadmodel
+
+    model = loadmodel(hook_feature)
+
+    age_features(sizes[i], task, model)
+    gender_features(sizes[i], task, model)
+    ethnic_features(sizes[i], task, model)
+    skin_features(sizes[i], task, model)
+
+    bias_analysis()
