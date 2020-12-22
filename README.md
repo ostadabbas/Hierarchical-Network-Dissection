@@ -58,3 +58,12 @@ In order to determine if any of the units in the dissected layer has a bias towa
 - layer_model_bias(gender).npz
 - layer_model_bias(age).npz
 - layer_NL_concept_probs.txt
+
+## Acknowledgements
+Thank you for the original Network Dissection implementation
+
+- [Network Dissection Lite in PyTorch](https://github.com/CSAILVision/NetDissect-Lite)
+
+## License
+This code is for non-commercial purpose only.
+For further inquiry please contact -- Augmented Cognition Lab at Northeastern University [here](http://www.northeastern.edu/ostadabbas/)
