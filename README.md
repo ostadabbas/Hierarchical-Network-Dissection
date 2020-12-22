@@ -2,7 +2,18 @@
 
 This is the official pytorch implementation of Face Dissect which performs network dissection on several face models as described in the [paper](). Also, this repo contains the link to the first ever Face Dictionary that contains several face concepts annotated under the same dataset.
 
-# Prerequisites:
+## Contents
+
+- [Prerequisites](#prerequisites)
+- [Preparation](#preparation)
+- [How to Run](#how-to-run)
+    -[Stage 1 (Dissection)](#stage-1-(dissection))
+    -[Stage 2 (Probabilistic Hierarchy)](#stage-2-(probabilistic-hierarchy))
+    -[Stage 3 (Non Localizable Bias)](#stage-3-(non-localizable-bias))
+- [Acknowledgement](#acknowledgement)
+
+
+## Prerequisites:
 
 - Torch=1.5.0
 - PIL
@@ -59,11 +70,13 @@ In order to determine if any of the units in the dissected layer has a bias towa
 - layer_model_bias(age).npz
 - layer_NL_concept_probs.txt
 
-## Acknowledgements
+## Acknowledgement
+
 Thank you for the original Network Dissection implementation
 
 - [Network Dissection Lite in PyTorch](https://github.com/CSAILVision/NetDissect-Lite)
 
 ## License
-This code is for non-commercial purpose only.
-For further inquiry please contact -- Augmented Cognition Lab at Northeastern University [here](http://www.northeastern.edu/ostadabbas/)
+
+- This code is for non-commercial purpose only.
+- For further inquiry please contact -- Augmented Cognition Lab at Northeastern University [here](http://www.northeastern.edu/ostadabbas/)
