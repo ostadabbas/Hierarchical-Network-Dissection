@@ -4,15 +4,15 @@ This is the official pytorch implementation of Face Dissect which performs netwo
 
 ## Contents
 
-- [Prerequisites](#prerequisites)
-- [Preparation](#preparation)
-- [How to Run](#how-to-run)
+* [Prerequisites](#prerequisites)
+* [Preparation](#preparation)
+* [How to Run](#how-to-run)
 
-    -[Stage 1 (Dissection)](#stage-1-(dissection))
-    -[Stage 2 (Probabilistic Hierarchy)](#stage-2-(probabilistic-hierarchy))
-    -[Stage 3 (Non Localizable Bias)](#stage-3-(non-localizable-bias))
+    * [Stage 1 (Dissection)](#stage-1-(dissection))
+    * [Stage 2 (Probabilistic Hierarchy)](#stage-2-(probabilistic-hierarchy))
+    * [Stage 3 (Non Localizable Bias)](#stage-3-(non-localizable-bias))
 
-- [Acknowledgement](#acknowledgement)
+* [Acknowledgement](#acknowledgement)
 
 
 ## Prerequisites:
