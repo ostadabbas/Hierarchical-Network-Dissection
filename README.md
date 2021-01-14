@@ -72,6 +72,7 @@ In order to determine if any of the units in the dissected layer has a bias towa
 - layer_model_bias(age).npz
 - layer_NL_concept_probs.txt
 
+The results can be plotted by setting plot = True in `bias_analysis()` function in `nl_bias.py` script.
 ## Acknowledgement
 
 Thank you for the original Network Dissection implementation
