@@ -162,6 +162,7 @@ def ethnic_features(size, curr_task, curr_model):
                 num_units = curr_activation.shape[1]
                 h, w = curr_activation.shape[2:]
                 features = np.zeros((1000, num_units, h, w))
+                first = False
 
             features[idx:idx+1] = curr_activation
 
@@ -210,23 +211,27 @@ def skin_features(size, curr_task, curr_model):
 # gender_features()
 # ethnic_features()
 
-def bias_analysis():
+def bias_analysis(plot=False):
 
     for task in tqdm(tasks):
-        print(task)
+        # print(task)
 
-        # og_tally = np.load('{}/{}_layer4_tally20.npz'.format(settings.OUTPUT_FOLDER, task))['tally']
-        # num_units = og_tally.shape[0]
-        # unit_info = {}
-        # unit_prob_tally = {}
+        if plot:
+            zeros = []
+            twentys = []
+            fortys = []
+            sixtys = []
 
-        # for unit in range(num_units):
-        #     unit_scores = og_tally[unit]
-        #     max_iou = np.max(unit_scores)
-        #     if max_iou > 0.04:
-        #         unit_info[unit] = 'localizable'
-        #     else:
-        #         unit_info[unit] = 'unlocalizable'
+            males = []
+            females = []
+
+            whites = []
+            asians = []
+            blacks = []
+            indians = []
+
+            brights = []
+            darks = []
 
         age_features = np.load('{}/{}_model_bias(age)_layer2.npz'.format(settings.NL_FOLDER, task))
         gender_features = np.load('{}/{}_model_bias(gender)_layer2.npz'.format(settings.NL_FOLDER, task))
@@ -255,7 +260,7 @@ def bias_analysis():
         all_ethnic_maps = np.concatenate([white, black , asian, indian], axis=0)
         all_skin_maps = np.concatenate([bright, dark], axis=0)
 
-        print(all_age_maps.shape, all_gender_maps.shape, all_ethnic_maps.shape, all_skin_maps.shape)
+        # print(all_age_maps.shape, all_gender_maps.shape, all_ethnic_maps.shape, all_skin_maps.shape)
 
         age_indexes = {'zero_to_twenty':[0, 1000], 'twenty_to_forty':[1000, 2000], 'forty_to_sixty':[2000, 3000], 'sixty_plus':[3000, 4000]}
         gender_indexes = {'male':[0, 2000], 'female':[2000, 4000]}
@@ -276,6 +281,11 @@ def bias_analysis():
 
         for ux in range(num_units):
 
+            age_flag = True
+            gender_flag = True
+            ethnic_flag = True
+            skin_flag = True
+
             unit_prob_tally[ux+1] = {'age':{}, 'gender':{}, 'ethnic':{}, 'skin':{}}
             # print(ux)
             age_scores = dict((x, 0) for x in age_indexes)
@@ -292,80 +302,137 @@ def bias_analysis():
             unit_skin_maps = all_skin_maps[:, ux, :, :] #
             skin_min, skin_max = unit_skin_maps.min(), unit_skin_maps.max()
 
-            sorted_age_indexes = np.argsort(np.max(all_age_maps.reshape(4000, -1), axis=-1))
-            sorted_gender_indexes = np.argsort(np.max(all_gender_maps.reshape(4000, -1), axis=-1))
-            sorted_ethnic_indexes = np.argsort(np.max(all_ethnic_maps.reshape(4000, -1), axis=-1))
-            sorted_skin_indexes = np.argsort(np.max(all_skin_maps.reshape(3000, -1), axis=-1))
+            if (age_max - age_min) == 0:
+                zeros.append(0)
+                twentys.append(0)
+                fortys.append(0)
+                sixtys.append(0)
+                age_flag = False
 
-            for i, idx in enumerate(sorted_age_indexes):
-                rank = (i+1) / 4000
-                fmap_score = (unit_age_maps[idx].max() - age_min) / (age_max - age_min)
-                # print(fmap_score)
-                for key in age_indexes:
-                    min_val = age_indexes[key][0]
-                    max_val = age_indexes[key][1]
-                    if idx >= min_val and idx < max_val:
-                        age_scores[key] += (rank * fmap_score)
+            if (gender_max - gender_min) == 0:
+                males.append(0)
+                females.append(0)
+                male_flag = False
 
-            for i, idx in enumerate(sorted_gender_indexes):
-                rank = (i+1) / 4000
-                fmap_score = (unit_gender_maps[idx].max() - gender_min) / (gender_max - gender_min)
-                for key in gender_indexes:
-                    min_val = gender_indexes[key][0]
-                    max_val = gender_indexes[key][1]
-                    if idx >= min_val and idx < max_val:
-                        gender_scores[key] += (rank * fmap_score)
+            if (ethnic_max - ethnic_min) == 0:
+                whites.append(0)
+                asians.append(0)
+                blacks.append(0)
+                indians.append(0)
+                ethnic_flag = False
 
-            for i, idx in enumerate(sorted_ethnic_indexes):
-                rank = (i+1) / 4000
-                fmap_score = (unit_ethnic_maps[idx].max() - ethnic_min) / (ethnic_max - ethnic_min)
-                # print(unit_ethnic_maps[idx].max())
-                for key in ethnic_indexes:
-                    min_val = ethnic_indexes[key][0]
-                    max_val = ethnic_indexes[key][1]
-                    if idx >= min_val and idx < max_val:
-                        ethnic_scores[key] += (rank * fmap_score)
+            if (skin_max - skin_min) == 0:
+                males.append(0)
+                females.append(0)
+                skin_flag = False
 
-            for i, idx in enumerate(sorted_skin_indexes):
-                rank = (i+1) / 3000
-                fmap_score = (unit_skin_maps[idx].max() - skin_min) / (skin_max - skin_min)
-                # print(unit_ethnic_maps[idx].max())
-                for key in skin_indexes:
-                    min_val = skin_indexes[key][0]
-                    max_val = skin_indexes[key][1]
-                    if idx >= min_val and idx < max_val:
-                        skin_scores[key] += (rank * fmap_score)
+            if age_flag:
 
-            age_scores['zero_to_twenty'] = age_scores['zero_to_twenty'] / 1000
-            age_scores['twenty_to_forty'] = age_scores['twenty_to_forty'] / 1000
-            age_scores['forty_to_sixty'] = age_scores['forty_to_sixty'] / 1000
-            age_scores['sixty_plus'] = age_scores['sixty_plus'] / 1000
+                sorted_age_indexes = np.argsort(np.max(unit_age_maps.reshape(4000, -1), axis=-1))
 
-            ethnic_scores['white'] = ethnic_scores['white'] / 1000
-            ethnic_scores['black'] = ethnic_scores['black'] / 1000
-            ethnic_scores['asian'] = ethnic_scores['asian'] / 1000
-            ethnic_scores['indian'] = ethnic_scores['indian'] / 1000
+                for i, idx in enumerate(sorted_age_indexes):
+                    rank = (i+1) / 4000
+                    fmap_score = (unit_age_maps[idx].max() - age_min) / (age_max - age_min)
+                    # print(fmap_score)
+                    for key in age_indexes:
+                        min_val = age_indexes[key][0]
+                        max_val = age_indexes[key][1]
+                        if idx >= min_val and idx < max_val:
+                            age_scores[key] += (rank * fmap_score)
 
-            gender_scores['male'] = gender_scores['male'] / 2000
-            gender_scores['female'] = gender_scores['female'] / 2000
+                age_scores['zero_to_twenty'] = age_scores['zero_to_twenty'] / 1000
+                age_scores['twenty_to_forty'] = age_scores['twenty_to_forty'] / 1000
+                age_scores['forty_to_sixty'] = age_scores['forty_to_sixty'] / 1000
+                age_scores['sixty_plus'] = age_scores['sixty_plus'] / 1000
 
-            skin_scores['bright'] = skin_scores['bright'] / 1500
-            skin_scores['dark'] = skin_scores['dark'] / 1500
+                age_probs = list(age_scores.values()) / sum(list(age_scores.values()))
+                age_keys = list(age_scores.keys())
 
-            age_probs = list(age_scores.values()) / sum(list(age_scores.values()))
-            ethnic_probs = list(ethnic_scores.values()) / sum(list(ethnic_scores.values()))
-            gender_probs = list(gender_scores.values()) / sum(list(gender_scores.values()))
-            skin_probs = list(skin_scores.values()) / sum(list(skin_scores.values()))
+                unit_prob_tally[ux+1]['age'] = dict((x, y) for x, y in zip(age_keys, age_probs))
 
-            age_keys = list(age_scores.keys())
-            ethnic_keys = list(ethnic_scores.keys())
-            gender_keys = list(gender_scores.keys())
-            skin_keys = list(skin_scores.keys())
+                if plot:
+                    zeros.append(age_probs[0])
+                    twentys.append(age_probs[1])
+                    fortys.append(age_probs[2])
+                    sixtys.append(age_probs[3])
 
-            unit_prob_tally[ux+1]['age'] = dict((x, y) for x, y in zip(age_keys, age_probs))
-            unit_prob_tally[ux+1]['gender'] = dict((x, y) for x, y in zip(gender_keys, gender_probs))
-            unit_prob_tally[ux+1]['ethnic'] = dict((x, y) for x, y in zip(ethnic_keys, ethnic_probs))
-            unit_prob_tally[ux+1]['skin'] = dict((x, y) for x, y in zip(skin_keys, skin_probs))
+            if gender_flag:
+
+                sorted_gender_indexes = np.argsort(np.max(unit_gender_maps.reshape(4000, -1), axis=-1))\
+
+                for i, idx in enumerate(sorted_gender_indexes):
+                    rank = (i+1) / 4000
+                    fmap_score = (unit_gender_maps[idx].max() - gender_min) / (gender_max - gender_min)
+                    for key in gender_indexes:
+                        min_val = gender_indexes[key][0]
+                        max_val = gender_indexes[key][1]
+                        if idx >= min_val and idx < max_val:
+                            gender_scores[key] += (rank * fmap_score)
+
+                gender_scores['male'] = gender_scores['male'] / 2000
+                gender_scores['female'] = gender_scores['female'] / 2000
+
+                gender_probs = list(gender_scores.values()) / sum(list(gender_scores.values()))
+                gender_keys = list(gender_scores.keys())
+                unit_prob_tally[ux+1]['gender'] = dict((x, y) for x, y in zip(gender_keys, gender_probs))
+
+                if plot:
+                    males.append(gender_probs[0])
+                    females.append(gender_probs[1])
+
+            if ethnic_flag:
+
+                sorted_ethnic_indexes = np.argsort(np.max(unit_ethnic_maps.reshape(4000, -1), axis=-1))
+
+                for i, idx in enumerate(sorted_ethnic_indexes):
+                    rank = (i+1) / 4000
+                    fmap_score = (unit_ethnic_maps[idx].max() - ethnic_min) / (ethnic_max - ethnic_min)
+                    # print(unit_ethnic_maps[idx].max())
+                    for key in ethnic_indexes:
+                        min_val = ethnic_indexes[key][0]
+                        max_val = ethnic_indexes[key][1]
+                        if idx >= min_val and idx < max_val:
+                            ethnic_scores[key] += (rank * fmap_score)
+
+                ethnic_scores['white'] = ethnic_scores['white'] / 1000
+                ethnic_scores['black'] = ethnic_scores['black'] / 1000
+                ethnic_scores['asian'] = ethnic_scores['asian'] / 1000
+                ethnic_scores['indian'] = ethnic_scores['indian'] / 1000
+
+                ethnic_probs = list(ethnic_scores.values()) / sum(list(ethnic_scores.values()))
+                ethnic_keys = list(ethnic_scores.keys())
+                unit_prob_tally[ux+1]['ethnic'] = dict((x, y) for x, y in zip(ethnic_keys, ethnic_probs))
+
+                if plot:
+                    whites.append(ethnic_probs[0])
+                    blacks.append(ethnic_probs[1])
+                    asians.append(ethnic_probs[2])
+                    indians.append(ethnic_probs[3])
+
+            if skin_flag:
+
+                sorted_skin_indexes = np.argsort(np.max(unit_skin_maps.reshape(3000, -1), axis=-1))
+
+                for i, idx in enumerate(sorted_skin_indexes):
+                    rank = (i+1) / 3000
+                    fmap_score = (unit_skin_maps[idx].max() - skin_min) / (skin_max - skin_min)
+                    # print(unit_ethnic_maps[idx].max())
+                    for key in skin_indexes:
+                        min_val = skin_indexes[key][0]
+                        max_val = skin_indexes[key][1]
+                        if idx >= min_val and idx < max_val:
+                            skin_scores[key] += (rank * fmap_score)
+
+                skin_scores['bright'] = skin_scores['bright'] / 1500
+                skin_scores['dark'] = skin_scores['dark'] / 1500
+
+                skin_probs = list(skin_scores.values()) / sum(list(skin_scores.values()))
+                skin_keys = list(skin_scores.keys())
+                unit_prob_tally[ux+1]['skin'] = dict((x, y) for x, y in zip(skin_keys, skin_probs))
+
+                if plot:
+                    brights.append(skin_probs[0])
+                    darks.append(skin_probs[1])
 
         # print(ethnic_scores)
 
@@ -383,6 +450,128 @@ def bias_analysis():
                     for grp in curr_data[j]:
                         txtfile.write('\t\t {} : {}\n'.format(grp, curr_data[j][grp]))
                     txtfile.write('\t}\n')
+
+        if plot:
+
+            if not os.path.exists('plots'):
+                os.makedirs('plots')
+
+            descending_age_index = np.argsort(zeros)[::-1]
+            descending_gender_index = np.argsort(males)[::-1]
+            descending_ethnic_index = np.argsort(whites)[::-1]
+            descending_skin_index = np.argsort(brights)[::-1]
+
+            zeros = [zeros[x] for x in descending_age_index]
+            twentys = [twentys[x] for x in descending_age_index]
+            fortys = [fortys[x] for x in descending_age_index]
+            sixtys = [sixtys[x] for x in descending_age_index]
+
+            males = [males[x] for x in descending_gender_index]
+            females = [females[x] for x in descending_gender_index]
+
+            whites = [whites[x] for x in descending_ethnic_index]
+            blacks = [blacks[x] for x in descending_ethnic_index]
+            asians = [asians[x] for x in descending_ethnic_index]
+            indians = [indians[x] for x in descending_ethnic_index]
+
+            brights = [brights[x] for x in descending_skin_index]
+            darks = [darks[x] for x in descending_skin_index]
+
+            index = np.arange(num_units)
+
+            fig, ax = plt.subplots()
+            fig.set_size_inches(14,10)
+
+            ax.bar(index, zeros) #, edgecolor='black')
+            ax.bar(index, twentys, bottom=zeros) #, edgecolor='black')
+            ax.bar(index, fortys, bottom=[(x+y) for x,y in zip(zeros,twentys)])
+            ax.bar(index, sixtys, bottom=[(x+y+z) for x,y,z in zip(zeros,twentys,fortys)])
+            ax.set_xlabel("Units")
+            ax.set_ylabel("Probability")
+
+            # plt.tight_layout()
+            plt.title('{} Model - Layer 4,\
+                       Age Group Probs\n 0-20:Avg Prob - {:.4f}, 20-40:Avg Prob - {:.4f}, 40-60:Avg Prob - {:.4f}, 60+:Avg Prob - {:.4f}\
+                       \n 0-20:Std Dev - {:.4f},431 , 20-40:Std Dev - {:.4f}, 40-60:Std Dev - {:.4f}, 60+:Std Dev - {:.4f}'.format(task.upper(),
+                                                                                                                                        mean(zeros),
+                                                                                                                                        mean(twentys),
+                                                                                                                                        mean(fortys),
+                                                                                                                                        mean(sixtys),
+                                                                                                                                        stdev(zeros),
+                                                                                                                                        stdev(twentys),
+                                                                                                                                        stdev(fortys),
+                                                                                                                                        stdev(sixtys)))
+
+            plt.legend(('0-20', '20-40', '40-60', '60+'), bbox_to_anchor=(1, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig('plots/{}_Layer4_probs(age).png'.format(task.upper()))
+            plt.close()
+
+            fig, ax = plt.subplots()
+
+            ax.bar(index, males) #, edgecolor='black')
+            ax.bar(index, females, bottom=males) #, edgecolor='black')
+            ax.set_xlabel("Units")
+            ax.set_ylabel("Probability")
+
+            # plt.tight_layout()
+            plt.title('{} Model - Layer 4, Gender Probs\n Male Avg Prob - {:.4f}, Female Avg Prob - {:.4f}\n Std Dev - {:.4f}'.format(task.upper(),
+                                                                                                                                      mean(males),
+                                                                                                                                      mean(females),
+                                                                                                                                      stdev(males)))
+
+            plt.legend(('Male', 'Female'), bbox_to_anchor=(1, 1), loc='upper left')
+            plt.tight_layout()
+            # plt.show()
+            plt.savefig('plots/{}_Layer4_probs(gender).png'.format(task.upper()))
+            plt.close()
+
+            fig, ax = plt.subplots()
+            fig.set_size_inches(14,10)
+
+            ax.bar(index, whites) #, edgecolor='black')
+            ax.bar(index, blacks, bottom=whites) #, edgecolor='black')
+            ax.bar(index, asians, bottom=[(x+y) for x,y in zip(whites,blacks)])
+            ax.bar(index, indians, bottom=[(x+y+z) for x,y,z in zip(whites,blacks,asians)])
+            ax.set_xlabel("Units")
+            ax.set_ylabel("Probability")
+
+            # plt.tight_layout()
+            plt.title('{} Model - Layer 4,\
+                       Ethnic Probs\n Whites Avg Prob - {:.4f}, Blacks Avg Prob - {:.4f}, Asians Avg Prob - {:.4f}, Indians Avg Prob - {:.4f}\
+                       \n Whites Std Dev - {:.4f},431 , Blacks Std Dev - {:.4f}, Asians Std Dev - {:.4f}, Indians Std Dev - {:.4f}'.format(task.upper(),
+                                                                                                                                        mean(whites),
+                                                                                                                                        mean(blacks),
+                                                                                                                                        mean(asians),
+                                                                                                                                        mean(indians),
+                                                                                                                                        stdev(whites),
+                                                                                                                                        stdev(blacks),
+                                                                                                                                        stdev(asians),
+                                                                                                                                        stdev(indians)))
+
+            plt.legend(('Whites', 'Blacks', 'Asians', 'Indians'), bbox_to_anchor=(1, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig('plots/{}_Layer4_probs(ethnic).png'.format(task.upper()))
+            plt.close()
+
+            fig, ax = plt.subplots()
+
+            ax.bar(index, brights) #, edgecolor='black')
+            ax.bar(index, darks, bottom=brights) #, edgecolor='black')
+            ax.set_xlabel("Units")
+            ax.set_ylabel("Probability")
+
+            # plt.tight_layout()
+            plt.title('{} Model - Layer 4, Skin Tone Probs\n Bright Avg Prob - {:.4f}, Dark Avg Prob - {:.4f}\n Std Dev - {:.4f}'.format(task.upper(),
+                                                                                                                                         mean(brights),
+                                                                                                                                         mean(darks),
+                                                                                                                                         stdev(darks)))
+
+            plt.legend(('Bright', 'Dark'), bbox_to_anchor=(1, 1), loc='upper left')
+            plt.tight_layout()
+            # plt.show()
+            plt.savefig('plots/{}_Layer4_probs(skin_tone).png'.format(task.upper()))
+            plt.close()
 
 
 # bias_analysis()
