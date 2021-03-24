@@ -59,25 +59,14 @@ class FeatureOperator:
         for batch_idx in range(num_batches):
             del features_blobs[:]
             batch = next(gen)
-            # model_inp = torch.cat([x['image'].unsqueeze(0) for x in batch])
-            # print(inp.shape)
             print('extracting feature from batch %d / %d' % (batch_idx+1, num_batches))
             model_inp = torch.cat([x.unsqueeze(0) for x in batch])
-            # print(model_inp.shape)
-            # print(features_blobs[0].shape)
 
             if settings.GPU:
                 model_inp = model_inp.cuda()
                 model = model.cuda()
 
             logit = model.forward(model_inp)
-            # print(features_blobs[0].shape)
-            '''
-            while np.isnan(logit.data.cpu().max()):
-                print("nan")
-                del features_blobs[:]
-                logit = model.forward(model_inp)
-            '''
 
             if len(features_blobs[0].shape) == 4 and wholefeatures[0] is None:
                 # initialize the feature variable
@@ -126,7 +115,6 @@ class FeatureOperator:
 
     def tally(self, features, fsize, thresholds, use_crop_points=False):
 
-        # print('hey')5 o Clock_Shadow, Arched Eyebrows, Bushy Eyebrows, No Beard, Bags Under_Eyes, Big Lips, Big Nose, Double Chin, Eyeglasses, Goatee, High Cheekbones, Rosy Cheeks, Mouth Slightly Open, Mustache, Narrow Eyes, Pointy Nose, Smiling, Wearing Lipstick
 
         num_units = features.shape[1]
         num_images = features.shape[0]
@@ -198,16 +186,8 @@ class FeatureOperator:
             all_maps = dict((x, dict((y, []) for y in self.loader.dense_labels)) for x in range(num_units))
             all_scores = dict((x, dict((y, []) for y in self.loader.dense_labels)) for x in range(num_units))
 
-            # units_top10_score = np.ones((num_units, len(self.loader.dense_labels), 10)) * -1
-            # units_top10_fmaps = np.ones((num_units, len(self.loader.dense_labels), 10)) * -1
-
             units_top20_score = np.ones((num_units, len(self.loader.dense_labels), 20)) * -1
             units_top20_fmaps = np.ones((num_units, len(self.loader.dense_labels), 20)) * -1
-
-            # tally_units = np.zeros(units,dtype=np.float64)
-            # tally_units_cat = np.zeros((units,len(categories)), dtype=np.float64)
-            # #print(tally_units_cat.shape)
-            # tally_labels = np.zeros(labels,dtype=np.float64)
 
             if use_crop_points:
                 sample_gen = self.tally_loader.get_batches(face_crop=True)
@@ -240,10 +220,8 @@ class FeatureOperator:
             # print(final_tally)
 
             np.savez(settings.OUTPUT_FOLDER + '/{}_tally20.npz'.format(settings.FEATURE_NAMES[0]),
-                     tally=final_tally, maps=units_top20_fmaps, scores=units_top20_score) #, all_map=all_maps, all_sc=all_scores)
+                     tally=final_tally, maps=units_top20_fmaps, scores=units_top20_score)
 
-        # with open('{}/{}_all_maps.pickle'.format(settings.OUTPUT_FOLDER, settings.FEATURE_NAMES[0]), 'wb') as handle:
-        #     pickle.dump(all_maps, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         sorting_ious = []
         sorted_features = np.zeros(fsize[0])
@@ -251,6 +229,7 @@ class FeatureOperator:
         sorted_units_top20_score = np.zeros(units_top20_score.shape)
         sorted_units_top20_fmaps = np.zeros(units_top20_fmaps.shape)
         sorted_thresholds = np.zeros(thresholds.shape)
+
         print('Sorting features IOU-wise')
 
         for ui in range(num_units):
@@ -273,10 +252,7 @@ class FeatureOperator:
         if use_crop_points:
             face_mod = MTCNN(image_size=256)
 
-        # count = 0
-        # total = 0
-
-        print('Drawing Top Features per Unit')
+        print('Drawing Top IoU Features per Unit')
 
         with PdfPages(settings.OUTPUT_FOLDER + '/{}.pdf'.format(settings.FEATURE_NAMES[0])) as pdf:
             num_top_images = settings.TOPN

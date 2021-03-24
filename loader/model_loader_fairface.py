@@ -28,21 +28,19 @@ def loadmodel(fn):
             embedding_size = 128
             num_classes = 4294
             self.cnn = nn.Sequential(
-                self.model.conv1,
-                self.model.bn1,
-                self.model.relu,
-                self.model.maxpool,
-                self.model.layer1,
-                self.model.layer2,
-                self.model.layer3,
-                self.model.layer4)
+                                        self.model.conv1,
+                                        self.model.bn1,
+                                        self.model.relu,
+                                        self.model.maxpool,
+                                        self.model.layer1,
+                                        self.model.layer2,
+                                        self.model.layer3,
+                                        self.model.layer4
+                                    )
 
             # modify fc layer based on https://arxiv.org/abs/1703.07737
             self.model.fc = nn.Sequential(
                 Flatten(),
-                # nn.Linear(100352, 1024),
-                # nn.BatchNorm1d(1024),
-                # nn.ReLU(),
                 nn.Linear(32768, embedding_size))# 100352
 
             self.model.classifier = nn.Linear(embedding_size, num_classes)
@@ -110,33 +108,14 @@ def loadmodel(fn):
     network = FaceNetModel()
     checkpoint = torch.load('model/best_state_43.pth')
     network.load_state_dict(checkpoint['state_dict'])
-    network.model.layer4[1].conv1.register_forward_hook(fn)
+    # network.model.layer1[2].conv1.register_forward_hook(fn)
     # network.model.layer2[2].conv1.register_forward_hook(fn)
+    # network.model.layer3[2].conv1.register_forward_hook(fn)
+    network.model.layer4[2].conv1.register_forward_hook(fn)
     return network.eval()
 
 if __name__ == '__main__':
 
-    # img = cv2.imread('../visual_dictionary/AU_12/SN001_3/original.png')
-    # img_copy = img.copy()
-    # img = cv2.resize(img, (112, 112))
-    # img = torch.FloatTensor(np.expand_dims(img.transpose(2, 0, 1), axis=0)).cuda()
-    # print(img.shape)
-    # img2 = cv2.imread('../face_data/malekumar_env03/headrende0008.png')[:,:,::-1]
-    # print(img.shape)
-    # mtcnn = MTCNN(image_size=256)
-    # cropped1 = mtcnn(img.copy())
-    # cropped2 = mtcnn(img2.copy())
+
     mo = loadmodel(hook_feature)
-    # embedding = mo(img)
-    # maps = features_blobs[0]
-    # print(maps.shape)
     print(mo)
-    # print(mo)
-    # for i in range(256):
-    #     cv2.imshow('i', m)
-    #     cv2.waitKey(0)
-    # print(features_blobs[0].shape)
-    # cv2.imshow('i', img_copy)
-    # cv2.waitKey(0)
-    # embedding2 = mo(cropped2.unsqueeze(0).cuda())
-    # print(mo.layer3[1].conv2)

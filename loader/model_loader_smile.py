@@ -16,25 +16,20 @@ def hook_feature(module, input, output):
 def loadmodel(fn):
 
     model = models.resnet50(pretrained=True)
-
-    # model.avgpool = nn.Sequential(Flatten(),
-    #                               nn.Linear(51200, 2048), # 100352
-    #                               nn.ReLU(),
-    #                               nn.BatchNorm1d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-    #                               nn.Linear(2048, 512),
-    #                               nn.ReLU(),
-    #                               nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-    #                               nn.Linear(512, 64),
-    #                               nn.ReLU(),
-    #                               nn.BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True))
     model.fc = nn.Sequential(nn.Linear(2048, 2))
-                             # nn.LogSoftmax(dim=1))
     model.cuda()
     model.load_state_dict(torch.load('model/smile_nonsmile_0.912.pth'))
 
-    model.layer4[2].conv1.register_forward_hook(fn)
+    # model.layer1[2].conv1.register_forward_hook(fn)
     # model.layer2[2].conv1.register_forward_hook(fn)
+    # model.layer3[2].conv1.register_forward_hook(fn)
+    model.layer4[2].conv1.register_forward_hook(fn)
     model.eval()
 
     return model
 
+
+if __name__ == '__main__':
+
+    mo = loadmodel(hook_feature)
+    print(mo)
