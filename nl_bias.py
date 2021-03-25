@@ -64,7 +64,7 @@ def hook_feature(module, input, output):
 
 data = non_localizable_dict('visual_dictionary/non_localizable')
 
-def age_features(size, curr_task, curr_model):
+def age_features(size, curr_task, curr_model, layer_name):
 
     data.read_age()
     images = data.age
@@ -95,13 +95,13 @@ def age_features(size, curr_task, curr_model):
 
         feature_dict[grp] = features
 
-    np.savez('{}/{}_model_bias(age).npz'.format(settings.NL_FOLDER, curr_task), zero=feature_dict['zero_to_twenty'],
-                                                                                twenty=feature_dict['twenty_to_forty'],
-                                                                                forty=feature_dict['forty_to_sixty'],
-                                                                                sixty=feature_dict['sixty_plus'])
+    np.savez('{}/{}_model_bias(age)_{}.npz'.format(settings.NL_FOLDER, curr_task, layer_name), zero=feature_dict['zero_to_twenty'],
+                                                                                               twenty=feature_dict['twenty_to_forty'],
+                                                                                               forty=feature_dict['forty_to_sixty'],
+                                                                                               sixty=feature_dict['sixty_plus'])
 
 
-def gender_features(size, curr_task, curr_model):
+def gender_features(size, curr_task, curr_model, layer_name):
 
     data.read_gender()
     images = data.gender
@@ -132,12 +132,12 @@ def gender_features(size, curr_task, curr_model):
 
         feature_dict[grp] = features
 
-    np.savez('{}/{}_model_bias(gender).npz'.format(settings.NL_FOLDER, curr_task),
-                                                   male=feature_dict['Male'],
-                                                   female=feature_dict['Female'])
+    np.savez('{}/{}_model_bias(gender)_{}.npz'.format(settings.NL_FOLDER, curr_task, layer_name),
+                                               male=feature_dict['Male'],
+                                               female=feature_dict['Female'])
 
 
-def ethnic_features(size, curr_task, curr_model):
+def ethnic_features(size, curr_task, curr_model, layer_name):
 
     data.read_ethnic()
     images = data.ethnicity
@@ -168,12 +168,12 @@ def ethnic_features(size, curr_task, curr_model):
 
         feature_dict[grp] = features
 
-    np.savez('{}/{}_model_bias(ethnic).npz'.format(settings.NL_FOLDER, curr_task), white=feature_dict['white'],
-                                                                                   black=feature_dict['black'],
-                                                                                   asian=feature_dict['asian'],
-                                                                                   indian=feature_dict['indian'])
+    np.savez('{}/{}_model_bias(ethnic)_{}.npz'.format(settings.NL_FOLDER, curr_task, layer_name), white=feature_dict['white'],
+                                                                                                  black=feature_dict['black'],
+                                                                                                  asian=feature_dict['asian'],
+                                                                                                  indian=feature_dict['indian'])
 
-def skin_features(size, curr_task, curr_model):
+def skin_features(size, curr_task, curr_model, layer_name):
 
     data.read_skin()
     images = data.skin
@@ -204,14 +204,10 @@ def skin_features(size, curr_task, curr_model):
 
         feature_dict[grp] = features
 
-    np.savez('{}/{}_model_bias(skin_tone).npz'.format(settings.NL_FOLDER, curr_task), bright=feature_dict['bright'], dark=feature_dict['dark'])
+    np.savez('{}/{}_model_bias(skin_tone)_{}.npz'.format(settings.NL_FOLDER, curr_task, layer_name), bright=feature_dict['bright'], dark=feature_dict['dark'])
 
 
-# age_features()
-# gender_features()
-# ethnic_features()
-
-def bias_analysis(plot=False):
+def bias_analysis(plot=False, tasks, layer_name):
 
     for task in tqdm(tasks):
         # print(task)
@@ -233,10 +229,10 @@ def bias_analysis(plot=False):
             brights = []
             darks = []
 
-        age_features = np.load('{}/{}_model_bias(age)_layer2.npz'.format(settings.NL_FOLDER, task))
-        gender_features = np.load('{}/{}_model_bias(gender)_layer2.npz'.format(settings.NL_FOLDER, task))
-        ethnic_features = np.load('{}/{}_model_bias(ethnic)_layer2.npz'.format(settings.NL_FOLDER, task))
-        skin_features = np.load('{}/{}_model_bias(skin_tone)_layer2.npz'.format(settings.NL_FOLDER, task))
+        age_features = np.load('{}/{}_model_bias(age)_{}.npz'.format(settings.NL_FOLDER, task, layer_name))
+        gender_features = np.load('{}/{}_model_bias(gender)_{}.npz'.format(settings.NL_FOLDER, task, layer_name))
+        ethnic_features = np.load('{}/{}_model_bias(ethnic)_{}.npz'.format(settings.NL_FOLDER, task, layer_name))
+        skin_features = np.load('{}/{}_model_bias(skin_tone)_{}.npz'.format(settings.NL_FOLDER, task, layer_name))
         # print(list(skin_features.keys()))
 
         zero = age_features['zero']
@@ -286,7 +282,7 @@ def bias_analysis(plot=False):
             ethnic_flag = True
             skin_flag = True
 
-            unit_prob_tally[ux+1] = {'age':{}, 'gender':{}, 'ethnic':{}, 'skin':{}}
+            unit_prob_tally[ux] = {'age':{}, 'gender':{}, 'ethnic':{}, 'skin':{}}
             # print(ux)
             age_scores = dict((x, 0) for x in age_indexes)
             gender_scores = dict((x, 0) for x in gender_indexes)
@@ -303,6 +299,13 @@ def bias_analysis(plot=False):
             skin_min, skin_max = unit_skin_maps.min(), unit_skin_maps.max()
 
             if (age_max - age_min) == 0:
+
+                unit_prob_tally[ux]['age'] = {
+                                                'zero_to_twenty':0,
+                                                'twenty_to_forty':0,
+                                                'forty_to_sixty':0,
+                                                'sixty_plus':0
+                                             }
                 zeros.append(0)
                 twentys.append(0)
                 fortys.append(0)
@@ -310,11 +313,23 @@ def bias_analysis(plot=False):
                 age_flag = False
 
             if (gender_max - gender_min) == 0:
+
+                unit_prob_tally[ux]['gender'] = {
+                                                   'male':0,
+                                                   'female':0,
+                                                }
                 males.append(0)
                 females.append(0)
                 male_flag = False
 
             if (ethnic_max - ethnic_min) == 0:
+
+                unit_prob_tally[ux]['ethnic'] = {
+                                                    'white':0,
+                                                    'black':0,
+                                                    'asian':0,
+                                                    'indian':0
+                                                }
                 whites.append(0)
                 asians.append(0)
                 blacks.append(0)
@@ -322,6 +337,11 @@ def bias_analysis(plot=False):
                 ethnic_flag = False
 
             if (skin_max - skin_min) == 0:
+
+                unit_prob_tally[ux]['skin'] = {
+                                                'bright':0,
+                                                'dark':0,
+                                              }
                 males.append(0)
                 females.append(0)
                 skin_flag = False
@@ -348,7 +368,7 @@ def bias_analysis(plot=False):
                 age_probs = list(age_scores.values()) / sum(list(age_scores.values()))
                 age_keys = list(age_scores.keys())
 
-                unit_prob_tally[ux+1]['age'] = dict((x, y) for x, y in zip(age_keys, age_probs))
+                unit_prob_tally[ux]['age'] = dict((x, y) for x, y in zip(age_keys, age_probs))
 
                 if plot:
                     zeros.append(age_probs[0])
@@ -374,7 +394,7 @@ def bias_analysis(plot=False):
 
                 gender_probs = list(gender_scores.values()) / sum(list(gender_scores.values()))
                 gender_keys = list(gender_scores.keys())
-                unit_prob_tally[ux+1]['gender'] = dict((x, y) for x, y in zip(gender_keys, gender_probs))
+                unit_prob_tally[ux]['gender'] = dict((x, y) for x, y in zip(gender_keys, gender_probs))
 
                 if plot:
                     males.append(gender_probs[0])
@@ -401,7 +421,7 @@ def bias_analysis(plot=False):
 
                 ethnic_probs = list(ethnic_scores.values()) / sum(list(ethnic_scores.values()))
                 ethnic_keys = list(ethnic_scores.keys())
-                unit_prob_tally[ux+1]['ethnic'] = dict((x, y) for x, y in zip(ethnic_keys, ethnic_probs))
+                unit_prob_tally[ux]['ethnic'] = dict((x, y) for x, y in zip(ethnic_keys, ethnic_probs))
 
                 if plot:
                     whites.append(ethnic_probs[0])
@@ -428,7 +448,7 @@ def bias_analysis(plot=False):
 
                 skin_probs = list(skin_scores.values()) / sum(list(skin_scores.values()))
                 skin_keys = list(skin_scores.keys())
-                unit_prob_tally[ux+1]['skin'] = dict((x, y) for x, y in zip(skin_keys, skin_probs))
+                unit_prob_tally[ux]['skin'] = dict((x, y) for x, y in zip(skin_keys, skin_probs))
 
                 if plot:
                     brights.append(skin_probs[0])
@@ -436,7 +456,11 @@ def bias_analysis(plot=False):
 
         # print(ethnic_scores)
 
-        with open('{}/{}_NL_concept_probs.txt'.format(settings.NL_FOLDER, task), 'w') as txtfile:
+        with open('{}/{}_{}_nl_probs.pkl'.format(settings.NL_FOLDER, task, layer_name), 'wb') as handle:
+
+            pickle.dump(unit_prob_tally, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        with open('{}/{}_{}_nl_probs.txt'.format(settings.NL_FOLDER, task, layer_name), 'w') as txtfile:
 
             for unit in unit_prob_tally:
 
@@ -453,8 +477,8 @@ def bias_analysis(plot=False):
 
         if plot:
 
-            if not os.path.exists('plots'):
-                os.makedirs('plots')
+            if not os.path.exists('plots/probs'):
+                os.makedirs('plots/probs')
 
             descending_age_index = np.argsort(zeros)[::-1]
             descending_gender_index = np.argsort(males)[::-1]
@@ -490,21 +514,22 @@ def bias_analysis(plot=False):
             ax.set_ylabel("Probability")
 
             # plt.tight_layout()
-            plt.title('{} Model - Layer 4,\
+            plt.title('{} Model - {},\
                        Age Group Probs\n 0-20:Avg Prob - {:.4f}, 20-40:Avg Prob - {:.4f}, 40-60:Avg Prob - {:.4f}, 60+:Avg Prob - {:.4f}\
                        \n 0-20:Std Dev - {:.4f},431 , 20-40:Std Dev - {:.4f}, 40-60:Std Dev - {:.4f}, 60+:Std Dev - {:.4f}'.format(task.upper(),
-                                                                                                                                        mean(zeros),
-                                                                                                                                        mean(twentys),
-                                                                                                                                        mean(fortys),
-                                                                                                                                        mean(sixtys),
-                                                                                                                                        stdev(zeros),
-                                                                                                                                        stdev(twentys),
-                                                                                                                                        stdev(fortys),
-                                                                                                                                        stdev(sixtys)))
+                                                                                                                                    layer_name,
+                                                                                                                                    mean(zeros),
+                                                                                                                                    mean(twentys),
+                                                                                                                                    mean(fortys),
+                                                                                                                                    mean(sixtys),
+                                                                                                                                    stdev(zeros),
+                                                                                                                                    stdev(twentys),
+                                                                                                                                    stdev(fortys),
+                                                                                                                                    stdev(sixtys)))
 
             plt.legend(('0-20', '20-40', '40-60', '60+'), bbox_to_anchor=(1, 1), loc='upper left')
             plt.tight_layout()
-            plt.savefig('plots/{}_Layer4_probs(age).png'.format(task.upper()))
+            plt.savefig('plots/probs/{}_{}_probs(age).png'.format(task.upper(), layer_name))
             plt.close()
 
             fig, ax = plt.subplots()
@@ -515,15 +540,16 @@ def bias_analysis(plot=False):
             ax.set_ylabel("Probability")
 
             # plt.tight_layout()
-            plt.title('{} Model - Layer 4, Gender Probs\n Male Avg Prob - {:.4f}, Female Avg Prob - {:.4f}\n Std Dev - {:.4f}'.format(task.upper(),
-                                                                                                                                      mean(males),
-                                                                                                                                      mean(females),
-                                                                                                                                      stdev(males)))
+            plt.title('{} Model - {}, Gender Probs\n Male Avg Prob - {:.4f}, Female Avg Prob - {:.4f}\n Std Dev - {:.4f}'.format(task.upper(),
+                                                                                                                                 layer_name,
+                                                                                                                                 mean(males),
+                                                                                                                                 mean(females),
+                                                                                                                                 stdev(males)))
 
             plt.legend(('Male', 'Female'), bbox_to_anchor=(1, 1), loc='upper left')
             plt.tight_layout()
             # plt.show()
-            plt.savefig('plots/{}_Layer4_probs(gender).png'.format(task.upper()))
+            plt.savefig('plots/probs/{}_{}_probs(gender).png'.format(task.upper(), layer_name))
             plt.close()
 
             fig, ax = plt.subplots()
@@ -537,21 +563,22 @@ def bias_analysis(plot=False):
             ax.set_ylabel("Probability")
 
             # plt.tight_layout()
-            plt.title('{} Model - Layer 4,\
+            plt.title('{} Model - {},\
                        Ethnic Probs\n Whites Avg Prob - {:.4f}, Blacks Avg Prob - {:.4f}, Asians Avg Prob - {:.4f}, Indians Avg Prob - {:.4f}\
                        \n Whites Std Dev - {:.4f},431 , Blacks Std Dev - {:.4f}, Asians Std Dev - {:.4f}, Indians Std Dev - {:.4f}'.format(task.upper(),
-                                                                                                                                        mean(whites),
-                                                                                                                                        mean(blacks),
-                                                                                                                                        mean(asians),
-                                                                                                                                        mean(indians),
-                                                                                                                                        stdev(whites),
-                                                                                                                                        stdev(blacks),
-                                                                                                                                        stdev(asians),
-                                                                                                                                        stdev(indians)))
+                                                                                                                                           layer_name,
+                                                                                                                                           mean(whites),
+                                                                                                                                           mean(blacks),
+                                                                                                                                           mean(asians),
+                                                                                                                                           mean(indians),
+                                                                                                                                           stdev(whites),
+                                                                                                                                           stdev(blacks),
+                                                                                                                                           stdev(asians),
+                                                                                                                                           stdev(indians)))
 
             plt.legend(('Whites', 'Blacks', 'Asians', 'Indians'), bbox_to_anchor=(1, 1), loc='upper left')
             plt.tight_layout()
-            plt.savefig('plots/{}_Layer4_probs(ethnic).png'.format(task.upper()))
+            plt.savefig('plots/probs/{}_{}_probs(ethnic).png'.format(task.upper(), layer_name))
             plt.close()
 
             fig, ax = plt.subplots()
@@ -562,19 +589,151 @@ def bias_analysis(plot=False):
             ax.set_ylabel("Probability")
 
             # plt.tight_layout()
-            plt.title('{} Model - Layer 4, Skin Tone Probs\n Bright Avg Prob - {:.4f}, Dark Avg Prob - {:.4f}\n Std Dev - {:.4f}'.format(task.upper(),
-                                                                                                                                         mean(brights),
-                                                                                                                                         mean(darks),
-                                                                                                                                         stdev(darks)))
+            plt.title('{} Model - {}, Skin Tone Probs\n Bright Avg Prob - {:.4f}, Dark Avg Prob - {:.4f}\n Std Dev - {:.4f}'.format(task.upper(),
+                                                                                                                                    layer_name,
+                                                                                                                                    mean(brights),
+                                                                                                                                    mean(darks),
+                                                                                                                                    stdev(darks)))
 
             plt.legend(('Bright', 'Dark'), bbox_to_anchor=(1, 1), loc='upper left')
             plt.tight_layout()
             # plt.show()
-            plt.savefig('plots/{}_Layer4_probs(skin_tone).png'.format(task.upper()))
+            plt.savefig('plots/probs/{}_{}_probs(skin_tone).png'.format(task.upper(), layer_name))
             plt.close()
 
+def comparison_plots(tasks, layer_name):
 
-# bias_analysis()
+    age_biased_tally = dict((x, {'zero_to_twenty':0, 'twenty_to_forty':0, 'forty_to_sixty':0, 'sixty_plus':0, 'un':0}) for x in tasks)
+    gender_biased_tally = dict((x, {'male':0, 'female':0, 'un':0}) for x in tasks)
+    ethnic_biased_tally = dict((x, {'white':0, 'black':0, 'asian':0, 'indian':0, 'un':0}) for x in tasks)
+    skin_biased_tally = dict((x, {'bright':0, 'dark':0, 'un':0}) for x in tasks)
+
+
+    for task in tasks:
+
+        print(task)
+
+        with open('{}/{}_{}_nl_probs.pkl'.format(settings.NL_FOLDER, task, layer_name), 'rb') as handle:
+            data = pickle.load(handle)
+
+        for unit in data:
+
+            age_dict = data[unit]['age']
+            gender_dict = data[unit]['gender']
+            ethnic_dict = data[unit]['ethnic']
+            skin_dict = data[unit]['skin']
+
+            age_bias_flag = False
+            gender_bias_flag = False
+            ethnic_bias_flag = False
+            skin_bias_flag = False
+
+            for sub_cat in age_dict:
+
+                if age_dict[sub_cat] >= 0.3:
+
+                    age_biased_tally[task][sub_cat] += 1
+                    age_bias_flag = True
+
+            if not age_bias_flag:
+                age_biased_tally[task]['un'] += 1
+
+            for sub_cat in gender_dict:
+
+                if gender_dict[sub_cat] >= 0.55:
+
+                    gender_biased_tally[task][sub_cat] += 1
+                    gender_bias_flag = True
+
+            if not gender_bias_flag:
+                gender_biased_tally[task]['un'] += 1
+
+            for sub_cat in ethnic_dict:
+
+                if ethnic_dict[sub_cat] >= 0.3:
+
+                    ethnic_biased_tally[task][sub_cat] += 1
+                    ethnic_bias_flag = True
+
+            if not ethnic_bias_flag:
+                ethnic_biased_tally[task]['un'] += 1
+
+            for sub_cat in skin_dict:
+
+                if skin_dict[sub_cat] >= 0.55:
+
+                    skin_biased_tally[task][sub_cat] += 1
+                    skin_bias_flag = True
+
+            if not skin_bias_flag:
+                skin_biased_tally[task]['un'] += 1
+
+    if not os.path.exists('plots/compare'):
+        os.makedirs('plots/compare')
+
+    ind = np.arange(len(tasks))
+    grp_width = 0.1
+    fig, ax = plt.subplots()
+
+    ax1 = ax.bar(ind - (2*grp_width), [age_biased_tally[x]['zero_to_twenty'] for x in tasks], width=grp_width, edgecolor='black')
+    ax2 = ax.bar(ind - grp_width, [age_biased_tally[x]['twenty_to_forty'] for x in tasks], width=grp_width, edgecolor='black')
+    ax3 = ax.bar(ind, [age_biased_tally[x]['forty_to_sixty'] for x in tasks], width=grp_width, edgecolor='black')
+    ax4 = ax.bar(ind + grp_width, [age_biased_tally[x]['sixty_plus'] for x in tasks], width=grp_width, edgecolor='black')
+    ax5 = ax.bar(ind + (2*grp_width), [age_biased_tally[x]['un'] for x in tasks], width=grp_width, edgecolor='black')
+
+    plt.legend(('0 - 20', '20 - 40', '40 - 60', '60+', 'Unbiased'), fontsize=8)
+    plt.xticks(np.arange(6), ('Age', 'Gender', 'Beauty', 'Facenet', 'Fairface', 'Smile'))
+    # plt.yticks(np.arange(0, 500, 100))
+    plt.tight_layout()
+    plt.savefig('plots/compare/Age_groups_comparison.png')
+    # plt.show()
+    plt.close()
+
+    fig, ax = plt.subplots()
+
+    ax1 = ax.bar(ind - (2*grp_width), [ethnic_biased_tally[x]['white'] for x in tasks], width=grp_width, edgecolor='black')
+    ax2 = ax.bar(ind - grp_width, [ethnic_biased_tally[x]['black'] for x in tasks], width=grp_width, edgecolor='black')
+    ax3 = ax.bar(ind, [ethnic_biased_tally[x]['asian'] for x in tasks], width=grp_width, edgecolor='black')
+    ax4 = ax.bar(ind + grp_width, [ethnic_biased_tally[x]['indian'] for x in tasks], width=grp_width, edgecolor='black')
+    ax5 = ax.bar(ind + (2*grp_width), [ethnic_biased_tally[x]['un'] for x in tasks], width=grp_width, edgecolor='black')
+
+    plt.legend(('White', 'Black', 'Asian', 'Indian', 'Unbiased'), fontsize=8)
+    plt.xticks(np.arange(6), ('Age', 'Gender', 'Beauty', 'Facenet', 'Fairface', 'Smile'))
+    # plt.yticks(np.arange(0, 500, 100))
+    plt.tight_layout()
+    plt.savefig('plots/compare/Ethnic_groups_comparison.png')
+    # plt.show()
+    plt.close()
+
+    fig, ax = plt.subplots()
+
+    ax1 = ax.bar(ind - grp_width, [skin_biased_tally[x]['bright'] for x in tasks], width=grp_width, edgecolor='black')
+    ax2 = ax.bar(ind, [skin_biased_tally[x]['dark'] for x in tasks], width=grp_width, edgecolor='black')
+    ax3 = ax.bar(ind + grp_width, [skin_biased_tally[x]['un'] for x in tasks], width=grp_width, edgecolor='black')
+
+    plt.legend(('Bright', 'Dark', 'Unbiased'), fontsize=8)
+    plt.xticks(np.arange(6), ('Age', 'Gender', 'Beauty', 'Facenet', 'Fairface', 'Smile'))
+    # plt.yticks(np.arange(0, 500, 100))
+    plt.tight_layout()
+    plt.savefig('plots/compare/Skin_groups_comparison.png')
+    # plt.show()
+    plt.close()
+
+    fig, ax = plt.subplots()
+
+    ax1 = ax.bar(ind - grp_width, [gender_biased_tally[x]['male'] for x in tasks], width=grp_width, edgecolor='black')
+    ax2 = ax.bar(ind, [gender_biased_tally[x]['female'] for x in tasks], width=grp_width, edgecolor='black')
+    ax3 = ax.bar(ind + grp_width, [gender_biased_tally[x]['un'] for x in tasks], width=grp_width, edgecolor='black')
+
+    plt.legend(('Male', 'Female', 'Unbiased'), fontsize=8)
+    plt.xticks(np.arange(6), ('Age', 'Gender', 'Beauty', 'Facenet', 'Fairface', 'Smile'))
+    # plt.yticks(np.arange(0, 500, 100))
+    plt.tight_layout()
+    plt.savefig('plots/compare/Gender_groups_comparison.png')
+    # plt.show()
+    plt.close()
+
+
 if __name__ == '__main__':
 
     dense_labels = ['AU_1', 'AU_2', 'AU_4', 'AU_5', 'AU_6', 'AU_9', 'AU_12', 'AU_15', 'AU_17', 'AU_20', 'AU_25', 'AU_26',
@@ -586,28 +745,36 @@ if __name__ == '__main__':
     tasks = ['smile', 'age', 'gender', 'beauty', 'fairface', 'facenet']
     # units = [512, 512, 512, 512, 192, 512]
     sizes = [200, 128, 128, 224, 112, 224]
+    layer_name = settings.LAYER_NAME
 
-    for i, task in enumerate(tasks):
-    # print(task, 'layer2')
+    generate = True # Set False if feature.npz files have already been generated
 
-    if task == 'age':
-        from loader.model_loader_age import loadmodel
-    if task == 'gender':
-        from loader.model_loader_gender import loadmodel
-    if task == 'beauty':
-        from loader.model_loader_beauty import loadmodel
-    if task == 'facenet':
-        from loader.model_loader_face import loadmodel
-    if task == 'fairface':
-        from loader.model_loader_fairface import loadmodel
-    if task == 'smile':
-        from loader.model_loader_smile import loadmodel
+    if generate:
+        for i, task in enumerate(tasks):
+            # print(task, 'layer2')
 
-    model = loadmodel(hook_feature)
+            if task == 'age':
+                from loader.model_loader_age import loadmodel
+            if task == 'gender':
+                from loader.model_loader_gender import loadmodel
+            if task == 'beauty':
+                from loader.model_loader_beauty import loadmodel
+            if task == 'facenet':
+                from loader.model_loader_face import loadmodel
+            if task == 'fairface':
+                from loader.model_loader_fairface import loadmodel
+            if task == 'smile':
+                from loader.model_loader_smile import loadmodel
 
-    age_features(sizes[i], task, model)
-    gender_features(sizes[i], task, model)
-    ethnic_features(sizes[i], task, model)
-    skin_features(sizes[i], task, model)
+            model = loadmodel(hook_feature)
 
-    bias_analysis()
+            age_features(sizes[i], task, model, layer_name)
+            gender_features(sizes[i], task, model, layer_name)
+            ethnic_features(sizes[i], task, model, layer_name)
+            skin_features(sizes[i], task, model, layer_name)
+
+    else:
+        pass
+
+    bias_analysis(tasks, layer_name)
+    comparison_plots(tasks, layer_name)
