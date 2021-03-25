@@ -1,6 +1,6 @@
-# Face Dissect
+# Hierarchical Network Dissection
 
-This is the official pytorch implementation of Face Dissect which performs network dissection on several face models as described in the [paper](). Also, this repo contains the link to the first ever Face Dictionary that contains several face concepts annotated under the same dataset.
+This is the official pytorch implementation of the Hierarchical Network Dissection which performs network dissection on several face models as described in the [paper](). Also, this repo contains the link to the first ever Face Dictionary that contains several face concepts annotated under the same dataset.
 
 ## Contents
 
@@ -10,7 +10,7 @@ This is the official pytorch implementation of Face Dissect which performs netwo
 
     * [Stage 1 (Dissection)](#stage-1-(dissection))
     * [Stage 2 (Probabilistic Hierarchy)](#stage-2-(probabilistic-hierarchy))
-    * [Stage 3 (Non Localizable Bias)](#stage-3-(non-localizable-bias))
+    * [Stage 3 (Global Bias)](#stage-3-(global-bias))
 
 * [Acknowledgement](#acknowledgement)
 
