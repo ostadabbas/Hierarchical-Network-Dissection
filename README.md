@@ -29,8 +29,8 @@ This is the official pytorch implementation of the Hierarchical Network Dissecti
 ## Preparation:
 
 - **Data**
-    - Download the data here(link to dictionary) and put in visual_dictionary folder.
-    - Download the models from here (link to models) and put them in model folder.
+    - Download the data [here](https://coe.northeastern.edu/Research/AClab/Face_Dictionary/) and put in visual_dictionary folder.
+    - Download the models from [here](https://coe.northeastern.edu/Research/AClab/Face_Dictionary/) and put them in model folder.
 - **Code**
     - Change flags in settings.py to determine which model to dissect.
     - Change the name of the layer in model loader scripts to choose which layer to dissect.
