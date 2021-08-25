@@ -1,6 +1,6 @@
 # Hierarchical Network Dissection
 
-This is the official pytorch implementation of the Hierarchical Network Dissection which performs network dissection on several face models as described in the [paper](). Also, this repo contains the link to the first ever Face Dictionary that contains several face concepts annotated under the same dataset.
+This is the official pytorch implementation of the Hierarchical Network Dissection which performs network dissection on several face models as described in the [paper](https://arxiv.org/pdf/2108.10360.pdf). Also, this repo contains the link to the first ever Face Dictionary that contains several face concepts annotated under the same dataset.
 
 ## Contents
 
